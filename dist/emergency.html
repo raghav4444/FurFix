@@ -129,7 +129,7 @@
             name="name"
             required
             class="border border-gray-300 p-2 rounded w-full mb-4"
-            placeholder="Ex:- 9988776655"
+            placeholder="Ex - Raghav Singh"
           />
 
           <label for="email" class="block mb-2">Your Email:</label>
@@ -139,7 +139,7 @@
             name="email"
             required
             class="border border-gray-300 p-2 rounded w-full mb-4"
-            placeholder="Ex:- sura123@gmail.com"
+            placeholder="Ex - sura123@gmail.com"
           />
 
           <label for="mobile" class="block mb-2">Mobile Number:</label>
@@ -153,22 +153,30 @@
             class="border border-gray-300 p-2 rounded w-full mb-4"
           />
 
-          <label for="location" class="block mb-2">Enter Location:</label>
+          <label for="location" class="block mb-2">Location:</label>
           <input
             type="text"
             id="location"
             name="location"
             required
             class="border border-gray-300 p-2 rounded w-full mb-4"
-            placeholder="Search for location..."
+            placeholder="Enter location"
           />
 
+          <button
+            type="button"
+            id="currentLocationBtn"
+            class="bg-green-500 hover:bg-green-700 text-white p-2 rounded transition duration-300 mb-4"
+          >
+            Get Current Location
+          </button>
+          <!-- 
           <label for="message" class="block mb-2">Message:</label>
           <textarea
             id="message"
             name="message"
             class="border border-gray-300 p-2 rounded w-full mb-4"
-          ></textarea>
+          ></textarea> -->
 
           <label for="image" class="block mb-2"
             >Upload Accident Image (Optional):</label
@@ -201,13 +209,42 @@
         <h2 class="text-xl mb-2">Accident Details:</h2>
         <p><strong>Name:</strong> <span id="nameText"></span></p>
         <p><strong>Mobile:</strong> <span id="mobileText"></span></p>
-        <p><strong>Location:</strong> <span id="locationText"></span></p>
+        <p><strong>Latitude:</strong> <span id="latitudeText"></span></p>
+        <p><strong>Longitude:</strong> <span id="longitudeText"></span></p>
         <p><strong>Accident Image:</strong></p>
         <img id="uploadedImage" class="hidden" alt="Uploaded Accident Image" />
       </div>
+      <script>
+        document
+          .getElementById("locationForm")
+          .addEventListener("submit", function (event) {
+            event.preventDefault();
+            const name = document.getElementById("name").value;
+            const mobile = document.getElementById("mobile").value;
+            const location = document.getElementById("location").value;
+            const latitude = document.getElementById("latitudeText").innerText;
+            const longitude =
+              document.getElementById("longitudeText").innerText;
 
+            const emailBody = `
+        Name: ${name}\n
+        Mobile: ${mobile}\n
+        Location: ${location}\n
+        Latitude: ${latitude}\n
+        Longitude: ${longitude}
+          `;
+
+            window.open(
+              `mailto:furfix4444@gmail.com?subject=New Animal Accident Report&body=${encodeURIComponent(
+                emailBody
+              )}`
+            );
+          });
+      </script>
+
+      <!-- <p><strong>Location:</strong> <span id="locationText"></span></p> -->
       <!-- Map Container -->
-      <div id="map" class="hidden"></div>
+      <div id="map"></div>
     </main>
 
     <!-- Leaflet.js library for map -->
@@ -217,7 +254,7 @@
 
     <script>
       // Initialize the map and geocoder
-      var map = L.map("map").setView([51.505, -0.09], 13);
+      var map = L.map("map").setView([26.8467, 80.9462], 13); // Coordinates for Uttar Pradesh, India
       L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
         attribution: "&copy; OpenStreetMap contributors",
       }).addTo(map);
@@ -243,12 +280,17 @@
         .getElementById("locationForm")
         .addEventListener("submit", function (event) {
           event.preventDefault();
+          alert(
+            "thanks for giving your detail we will connect you as soon as possible"
+          );
 
           // Get input values
-          var name = document.getElementById("name").value;
-          var mobile = document.getElementById("mobile").value;
-          var location = document.getElementById("location").value;
-          var imageInput = document.getElementById("image");
+          const loc = document.getElementById("locationDisplay");
+          loc.classList.remove("hidden");
+          const name = document.getElementById("name").value;
+          const mobile = document.getElementById("mobile").value;
+          const location = document.getElementById("location").value;
+          const imageInput = document.getElementById("image");
 
           // Validate inputs
           if (
@@ -257,7 +299,7 @@
             location.trim() === ""
           ) {
             alert("Please fill out all fields.");
-            return;
+            document.getElementById("nameText").innerText = name;
           }
 
           var mobilePattern = /^[0-9]{10}$/;
@@ -282,10 +324,6 @@
             reader.readAsDataURL(imageInput.files[0]);
           }
 
-          // Show the location details section
-          document.getElementById("locationDisplay").classList.remove("hidden");
-          document.getElementById("locationDisplay").classList.add("fade-in");
-
           // Use Nominatim API to get location details
           var apiUrl = `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(
             location
@@ -297,11 +335,17 @@
                 var lat = data[0].lat;
                 var lon = data[0].lon;
                 displayMap(lat, lon);
+                document.getElementById("latitudeText").innerText = lat;
+                document.getElementById("longitudeText").innerText = lon;
               } else {
                 alert("Location not found. Please try again.");
               }
             })
             .catch((error) => console.error("Error fetching location:", error));
+
+          // Show the location details section
+          document.getElementById("locationDisplay").classList.remove("hidden");
+          document.getElementById("locationDisplay").classList.add("fade-in");
 
           // Reset the form
           document.getElementById("locationForm").reset();
@@ -333,6 +377,28 @@
           reader.readAsDataURL(imageInput.files[0]);
         }
       });
+
+      // Get current location and center map
+      document
+        .getElementById("currentLocationBtn")
+        .addEventListener("click", function () {
+          if (navigator.geolocation) {
+            navigator.geolocation.getCurrentPosition(
+              function (position) {
+                var lat = position.coords.latitude;
+                var lon = position.coords.longitude;
+                displayMap(lat, lon);
+                document.getElementById("latitudeText").innerText = lat;
+                document.getElementById("longitudeText").innerText = lon;
+              },
+              function (error) {
+                alert("Error getting location: " + error.message);
+              }
+            );
+          } else {
+            alert("Geolocation is not supported by this browser.");
+          }
+        });
     </script>
   </body>
 </html>
